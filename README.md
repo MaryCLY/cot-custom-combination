@@ -33,3 +33,12 @@ python .\update_upstream.py --publish
 `cot-loader-version` 元数据判断是否需要更新；使用 `--force` 可强制重新下载。
 设置 `GITHUB_TOKEN` 或 `GH_TOKEN` 可以避免 GitHub API 的匿名请求限流；
 未设置或 API 限流时，脚本会自动改用 GitHub release 页面查询。
+
+## 自动更新
+
+GitHub Actions 工作流每天北京时间凌晨 3:17 自动运行更新脚本。也可以在仓库的
+Actions 页面手动运行 `Update upstream release` 工作流，或发送类型为
+`upstream_release` 的 `repository_dispatch` 事件触发更新。
+
+工作流使用仓库自带的 `GITHUB_TOKEN` 提交并推送更新，需要仓库允许 GitHub
+Actions 对内容进行写入。
