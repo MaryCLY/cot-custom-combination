@@ -129,6 +129,18 @@ def extract_html(archive: Path, member: str, target: Path) -> None:
         with bundle.open(member) as source, target.open("wb") as output:
             shutil.copyfileobj(source, output)
 
+def remove_itchio_scripts(input_file: Path, output_file: Path=None):
+    if output_file is None:
+        output_file = input_file
+    with open(input_file, 'r', encoding='utf-8') as f:
+        html = f.read()
+    pattern = re.compile(
+        r'<script[^>]*\s+src\s*=\s*["\']?[^"\'>]*itch\.io[^"\'>]*["\']?[^>]*>.*?</script>',
+        re.IGNORECASE | re.DOTALL
+    )
+    clean_html = pattern.sub('', html)
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write(clean_html)
 
 def game_version(loader_name: str) -> str:
     match = re.fullmatch(r"CoT-ModLoader-v(.+)-v[^/]+\.zip", loader_name)
@@ -244,6 +256,8 @@ def main() -> int:
         mods_dir.mkdir(exist_ok=True)
         extract_html(downloaded[normal[0]], normal_member, vanilla_dir / "index.html")
         extract_html(downloaded[polyfill[0]], polyfill_member, vanilla_dir / "polyfill.html")
+        remove_itchio_scripts(vanilla_dir / "index.html")
+        remove_itchio_scripts(vanilla_dir / "polyfill.html")
         shutil.copyfile(downloaded[image[0]], mods_dir / "CoTGameOriginalImagePack.mod.zip")
         shutil.copyfile(downloaded[i18n[0]], mods_dir / "ModI18N.mod.zip")
 
