@@ -27,8 +27,8 @@ USER_AGENT = "cot-custom-combination-updater/1.0"
 
 NORMAL_RE = re.compile(r"^CoT-ModLoader-.+(?<!-polyfill)\.zip$")
 POLYFILL_RE = re.compile(r"^CoT-ModLoader-.+-polyfill\.zip$")
-IMAGE_RE = re.compile(r"^GameOriginalImagePack-.+\.mod\.zip$")
-I18N_RE = re.compile(r"^ModI18N-.+\.mod\.zip$")
+IMAGE_RE = re.compile(r"^GameOriginalImagePack-.+\.zip$")
+I18N_RE = re.compile(r"^ModI18N-.+\.zip$")
 
 
 @dataclass(frozen=True)
@@ -129,18 +129,22 @@ def extract_html(archive: Path, member: str, target: Path) -> None:
         with bundle.open(member) as source, target.open("wb") as output:
             shutil.copyfileobj(source, output)
 
-def remove_itchio_scripts(input_file: Path, output_file: Path=None):
+def remove_itchio_scripts(input_file: Path, output_file: Path | None = None):
     if output_file is None:
         output_file = input_file
-    with open(input_file, 'r', encoding='utf-8') as f:
-        html = f.read()
+    html = input_file.read_text(encoding="utf-8")
     pattern = re.compile(
         r'<script[^>]*\s+src\s*=\s*["\']?[^"\'>]*itch\.io[^"\'>]*["\']?[^>]*>.*?</script>',
         re.IGNORECASE | re.DOTALL
     )
     clean_html = pattern.sub('', html)
-    with open(output_file, 'w', encoding='utf-8') as f:
-        f.write(clean_html)
+    temp_output = output_file.with_name(f"{output_file.name}.tmp")
+    temp_output.write_text(clean_html, encoding="utf-8", newline="")
+    try:
+        temp_output.replace(output_file)
+    except PermissionError:
+        output_file.unlink(missing_ok=True)
+        temp_output.replace(output_file)
 
 def game_version(loader_name: str) -> str:
     match = re.fullmatch(r"CoT-ModLoader-v(.+)-v[^/]+\.zip", loader_name)
